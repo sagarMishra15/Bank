@@ -5,17 +5,21 @@ import com.app.Bank.dao.Account.AccountRepository;
 import com.app.Bank.dao.Account.AccountService;
 import com.app.Bank.dao.user.UserRepository;
 import com.app.Bank.dto.AccountDTO;
+import com.app.Bank.dto.Filter.AccountDTOFilter;
 import com.app.Bank.model.Account;
 import com.app.Bank.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Optional;
 
 @CrossOrigin
@@ -63,14 +67,18 @@ public class AccountController {
         if(auth.getRole()==Constants.Role.ADMIN || auth.getRole()==Constants.Role.BANK_MANAGER) {
             Account account = new Account();
             User user = userRepository.findByUsername(body.getUsername());
-            account.setAccNo(body.getAccNo());
-            account.setIfsc(body.getIfsc());
-            account.setBranch(body.getBranch());
-            account.setTpin(body.getTpin());
-            account.setStatus(body.getStatus());
-            account.setUserId(user.getId());
-            account.setUpdatedAt(LocalDateTime.now());
-            return accountService.updateAccount(account);
+            if(user!=null){
+                account.setAccNo(body.getAccNo());
+                account.setIfsc(body.getIfsc());
+                account.setBranch(body.getBranch());
+                account.setTpin(body.getTpin());
+                account.setStatus(body.getStatus());
+                account.setUserId(user.getId());
+                account.setUpdatedAt(LocalDateTime.now());
+                return accountService.updateAccount(account);
+            }
+            else
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
         else{
             return accountService.UnauthorizedAccess();
@@ -129,5 +137,14 @@ public class AccountController {
         }
         else
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized Access. User must be CUSTOMER or BANK_MANAGER");
+    }
+
+    @GetMapping("/account-filter")
+    public Page<Account> filterAccounts(@ParameterObject AccountDTOFilter param,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "5") int size
+//                                        @RequestParam Map<String, Object> params
+                                        ){
+        return accountService.getFilteredAccounts(param.getUsername(), param.getAccNo(), param.getIfsc(), param.getBranch(),param.getStatus(), PageRequest.of(page,size));
     }
 }
