@@ -45,7 +45,7 @@ public class AccountServiceImpl implements AccountService{
         else {
             MyResponse<Account> rs = new MyResponse<>();
             rs.setData(null);
-            rs.setMessage("Data Not Found");
+            rs.setMessage("Account Not Found");
             rs.setStatusCode(HttpStatus.NOT_FOUND);
             ResponseEntity<MyResponse<Account>> re = new ResponseEntity<>(rs, HttpStatus.NOT_FOUND);
             return re;
@@ -111,5 +111,12 @@ public class AccountServiceImpl implements AccountService{
             return ResponseEntity.ok("Account Balance: "+user.get().getBalance());
         }
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account Not Found");
+    }
+
+    @Override
+    public Page<Account> getFilteredAccounts(String username, String accNo,
+                                             String ifsc, Constants.Branch branch,
+                                             Constants.Status status, Pageable pageable) {
+        return accountRepository.findAll(AccountSpecification.getAccountsByFilter(username,accNo,ifsc,branch,status),pageable);
     }
 }

@@ -4,12 +4,15 @@ import com.app.Bank.common.Constants;
 import com.app.Bank.dao.Account.AccountService;
 import com.app.Bank.dao.user.UserRepository;
 import com.app.Bank.dao.user.UserService;
+import com.app.Bank.dto.Filter.UserDTOFilter;
 import com.app.Bank.dto.UserDTO;
 import com.app.Bank.model.User;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -64,5 +67,14 @@ public class UserController {
             return ResponseEntity.ok(usersPage);
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized Access. User must be ADMIN or BANK_MANAGER");
+    }
+
+    @Operation(summary = "Get filtered users | Admin, BANK_MANAGER & CUSTOMER Access")
+    @GetMapping("/user-filter")
+    public Page<User> filterUsers(
+            @ParameterObject UserDTOFilter params,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size) {
+        return userService.getFilteredUsers(params.getUsername(), params.getMobile(), params.getRole(), PageRequest.of(page, size));
     }
 }
